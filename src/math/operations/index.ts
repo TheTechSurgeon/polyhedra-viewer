@@ -1,6 +1,13 @@
 import { truncate, rectify, sharpen } from './truncateOps';
 import { dual, expand, snub, contract, twist } from './resizeOps';
-import { elongate, gyroelongate, shorten, turn } from './prismOps';
+import {
+  elongate,
+  gyroelongate,
+  shorten,
+  enlarge,
+  compress,
+  turn,
+} from './prismOps';
 import { augment, diminish, gyrate } from './cutPasteOps';
 
 import {
@@ -27,6 +34,8 @@ export const operations = {
   elongate,
   gyroelongate,
   shorten,
+  enlarge,
+  compress,
   turn,
   augment,
   diminish,

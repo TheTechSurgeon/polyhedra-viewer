@@ -76,6 +76,9 @@ const getInverseOperation = (operation: string) => {
     case 'elongate':
     case 'gyroelongate':
       return 'shorten';
+    // FIXME decide on a name
+    case 'enlarge':
+      return 'compress';
     default:
       throw new Error(`Invalid operation: ${operation}`);
   }
@@ -295,6 +298,18 @@ const baseCapstones = (() => {
         ],
       },
     });
+    const numSides = polygonPrefixes.of(name);
+    if (numSides <= 5) {
+      const doubledNumSides = numSides * 2;
+      graph = graphMerge(graph, {
+        [prism]: {
+          enlarge: 'P' + doubledNumSides,
+        },
+        [antiprism]: {
+          enlarge: 'A' + doubledNumSides,
+        },
+      });
+    }
   });
   // for diminished icosahedra
   graph['A5']['augment'][0].align = 'para';
@@ -415,7 +430,10 @@ const baseAugmentations = (() => {
 const diminishedIcosahedra = (() => {
   return {
     J63: {
-      augment: [{ using: 'Y3', value: 'J64' }, { using: 'Y5', value: 'J62' }],
+      augment: [
+        { using: 'Y3', value: 'J64' },
+        { using: 'Y5', value: 'J62' },
+      ],
     },
     J62: {
       augment: { using: 'Y5', align: 'meta', value: 'J11' },

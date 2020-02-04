@@ -204,11 +204,19 @@ function ElongateIcon({ styled, render: Renderer }: ElongateIconProps) {
       <Polygon className={styles(styled)} n={6} r={r} a={90} cx={cx} cy={cy} />
       <PolyLine
         className={styles('invariant')}
-        points={[[cx - ap, cy - r / 2], [cx, cy - r], [cx + ap, cy - r / 2]]}
+        points={[
+          [cx - ap, cy - r / 2],
+          [cx, cy - r],
+          [cx + ap, cy - r / 2],
+        ]}
       />
       <PolyLine
         className={styles('invariant')}
-        points={[[cx - ap, cy + r / 2], [cx, cy + r], [cx + ap, cy + r / 2]]}
+        points={[
+          [cx - ap, cy + r / 2],
+          [cx, cy + r],
+          [cx + ap, cy + r / 2],
+        ]}
       />
       {Renderer ? (
         <Renderer {...{ cx, cy, r, ap }} />
@@ -307,7 +315,10 @@ function drawIcon(name: OpName) {
                   key={i}
                   className={styles('changed')}
                   transform={`rotate(${i * 120} ${cx} ${cy})`}
-                  points={[[cx - r / 2, cy + ap1], [cx + r / 2, cy + ap]]}
+                  points={[
+                    [cx - r / 2, cy + ap1],
+                    [cx + r / 2, cy + ap],
+                  ]}
                 />
               ))}
             </>
@@ -316,6 +327,7 @@ function drawIcon(name: OpName) {
       );
     }
 
+    case 'enlarge':
     case 'elongate':
       return <ElongateIcon styled="added" />;
 
@@ -338,6 +350,7 @@ function drawIcon(name: OpName) {
         />
       );
 
+    case 'compress':
     case 'shorten':
       return <ElongateIcon styled="subtracted" />;
 
