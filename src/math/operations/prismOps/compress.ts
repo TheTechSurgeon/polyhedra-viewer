@@ -1,70 +1,34 @@
-import _ from 'lodash';
-import { Twist } from 'types';
-import { Polyhedron, Cap, VEList, VertexList } from 'math/polyhedra';
-import { getEdgeFacePaths } from '../operationUtils';
+import { Polyhedron } from 'math/polyhedra';
 import makeOperation from '../makeOperation';
-import { antiprismHeight, getScaledPrismVertices } from './prismUtils';
+import { getTransformedVertices } from '../operationUtils';
 
-function duplicateVertices(
-  polyhedron: Polyhedron,
-  boundary: VEList,
-  twist?: Twist,
-) {
-  const newVertexMapping = {};
-  _.forEach(boundary.edges, (edge, i) => {
-    const oppositeFace = edge.twin().face;
-    _.forEach(edge.vertices, (v, j) => {
-      _.set(
-        newVertexMapping,
-        [oppositeFace.index, v.index],
-        polyhedron.numVertices() + ((i + j) % boundary.numSides),
-      );
-    });
-  });
-
-  return polyhedron.withChanges(solid =>
-    solid
-      .addVertices(boundary.vertices)
-      .mapFaces(face =>
-        face.vertices.map(v =>
-          _.get(newVertexMapping, [face.index, v.index], v.index),
-        ),
-      )
-      .addFaces(
-        _.flatMap(boundary.edges, edge =>
-          _.map(getEdgeFacePaths(edge, twist), face =>
-            _.map(face, path => _.get(newVertexMapping, path, path[1])),
-          ),
-        ),
-      ),
-  );
-}
-
-function doElongate(polyhedron: Polyhedron, twist?: Twist) {
-  const caps = Cap.getAll(polyhedron);
-  const boundary = caps[0].boundary();
-  const n = boundary.numSides;
-  const duplicated = duplicateVertices(polyhedron, boundary, twist);
-  let vertexSets: VertexList[];
-
-  const duplicatedCaps = Cap.getAll(duplicated);
-  if (duplicatedCaps.length === 2) {
-    vertexSets = duplicatedCaps;
-  } else {
-    // Otherwise it's the largest face
-    vertexSets = [
-      duplicated.faces[boundary.adjacentFaces()[0].index],
-      Cap.getAll(duplicated)[0],
-    ];
+function doCompress(polyhedron: Polyhedron) {
+  if (!polyhedron.name.includes(' prism')) {
+    throw new Error('non-prisms not yet supported');
   }
-  const adjustInfo = { vertexSets, boundary };
 
-  const height = polyhedron.edgeLength() * (twist ? antiprismHeight(n) : 1);
+  // can always be guaranteed a base is the largest face b/c we only do compress
+  // on 6, 8, 10
+  const base = polyhedron.largestFace();
+  const compressFaces = base.adjacentFaces().filter((_, index) => index % 2);
 
-  const endVertices = getScaledPrismVertices(adjustInfo, height, twist);
+  const resApothem =
+    base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
+  const scale = base.apothem() - resApothem;
+
+  // move the vertices of these faces inward
+  const endVertices = getTransformedVertices(compressFaces, face => v =>
+    v.add(
+      face
+        .normal()
+        .getInverted()
+        .scale(scale),
+    ),
+  );
+
   return {
     animationData: {
-      start: duplicated,
+      start: polyhedron,
       endVertices,
     },
   };
@@ -72,6 +36,6 @@ function doElongate(polyhedron: Polyhedron, twist?: Twist) {
 
 export const compress = makeOperation('compress', {
   apply(polyhedron) {
-    return doElongate(polyhedron);
+    return doCompress(polyhedron);
   },
 });

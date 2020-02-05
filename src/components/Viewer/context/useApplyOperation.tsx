@@ -26,6 +26,7 @@ export default function useApplyOperation() {
       if (!operation) throw new Error('no operation defined');
 
       const { result, animationData } = operation.apply(polyhedron, options);
+
       if (!operation.hasOptions(result) || _.isEmpty(options)) {
         unsetOperation();
       } else {

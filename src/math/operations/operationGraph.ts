@@ -375,6 +375,32 @@ const baseCapstones = (() => {
         });
       }
     });
+
+    // expand relationships
+    const [sides, type] = name.split(' ');
+    if (type === 'pyramid') {
+      const cupolaRow = capstoneMap[`${sides} cupola`];
+      graph = graphMerge(graph, {
+        [base]: {
+          enlarge: cupolaRow['--'],
+        },
+        [elongated]: {
+          enlarge: cupolaRow.elongated,
+        },
+        [gyroelongated]: {
+          enlarge: cupolaRow.gyroelongated,
+        },
+        [bi]: {
+          enlarge: cupolaRow['bi-'][0],
+        },
+        [elongatedBi]: {
+          enlarge: cupolaRow['elongated bi-'][0],
+        },
+        [gyroelongatedBi]: {
+          enlarge: cupolaRow['gyroelongated bi-'],
+        },
+      });
+    }
   });
 
   return graph;
