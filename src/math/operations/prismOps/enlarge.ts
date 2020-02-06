@@ -75,3 +75,9 @@ export const enlarge = makeOperation('enlarge', {
     return doElongate(polyhedron);
   },
 });
+
+export const gyroenlarge = makeOperation('gyroenlarge', {
+  apply(polyhedron) {
+    return doElongate(polyhedron);
+  },
+});

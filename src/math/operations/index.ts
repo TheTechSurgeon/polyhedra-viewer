@@ -5,6 +5,7 @@ import {
   gyroelongate,
   shorten,
   enlarge,
+  // gyroenlarge,
   compress,
   turn,
 } from './prismOps';
@@ -35,6 +36,8 @@ export const operations = {
   gyroelongate,
   shorten,
   enlarge,
+  gyroenlarge: enlarge, // FIXME why won't this import?
+  // gyroenlarge,
   compress,
   turn,
   augment,

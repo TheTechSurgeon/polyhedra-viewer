@@ -1,64 +1,70 @@
-import { Polyhedron, Cap, VEList, VertexList } from 'math/polyhedra';
+import { Polyhedron, Cap, VEList, Edge, Vertex } from 'math/polyhedra';
+import { withOrigin } from 'math/geom';
 import makeOperation from '../makeOperation';
 import { getTransformedVertices } from '../operationUtils';
 import { inColumn } from '../../polyhedra/tableUtils';
-import { Vec3D } from '../../geom';
 
-interface CompressArgs<VL extends VertexList> {
-  /** The face-like regular polygon to reference when contracting */
+interface CompressArgs {
+  /** The regular polygonal base used to calculate the distance to compress */
   base: VEList;
-  /** The list of `VertexList`s to apply compression to. */
-  compressSets: VL[];
-  /** The direction vector to push each Vertex set. Must be a unit vector. */
-  getDirVec: (set: VL) => Vec3D;
+  /** The list of edges of the base to compress: should be every other edge of the base */
+  edges: Edge[];
+  /** The vertices to compress for each edge */
+  vertexListForEdge: (e: Edge) => Vertex[];
+  /** Whether to apply a twist to the compression (for antiprisms) */
+  twist?: boolean;
 }
 
-function compressVertices<VL extends VertexList>({
+// FIXME octahedron can be enlarged two ways!!!
+function compressVertices({
+  twist,
   base,
-  compressSets,
-  getDirVec,
-}: CompressArgs<VL>) {
+  edges,
+  vertexListForEdge,
+}: CompressArgs) {
+  const polyhedron = base.polyhedron;
   const resApothem =
     base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
   const scale = base.apothem() - resApothem;
-  const endVertices = getTransformedVertices(compressSets, set => {
-    return v => v.add(getDirVec(set).scale(scale));
-  });
+
+  const compressSets = edges.map(e => ({
+    dirVec: base
+      .centroid()
+      .sub(e.midpoint())
+      .getNormalized(),
+    vertices: vertexListForEdge(e),
+    polyhedron,
+  }));
+
+  const endVertices = getTransformedVertices(compressSets, ({ dirVec }) => v =>
+    v.add(dirVec.scale(scale)),
+  );
   return {
     animationData: {
-      start: compressSets[0].polyhedron,
+      start: polyhedron,
       endVertices,
     },
   };
 }
 
+// TODO we can generalize this even further based on whether the base is a Face or a capstone boundary
+// but I want to wait until we have the antiprisms in there
 function doCompress(polyhedron: Polyhedron) {
   if (inColumn(polyhedron.name, 'prisms', 'prism')) {
     const base = polyhedron.largestFace();
     return compressVertices({
       base,
-      compressSets: base.adjacentFaces().filter((_, index) => index % 2),
-      getDirVec: face => face.normal().getInverted(),
+      edges: base.edges.filter((e, index) => index % 2 === 0),
+      vertexListForEdge: e => e.twinFace().vertices,
     });
   }
   if (inColumn(polyhedron.name, 'capstones', '--')) {
-    const base = polyhedron.largestFace();
+    const cap = Cap.getAll(polyhedron)[0];
+    const base = cap.boundary();
     return compressVertices({
       base,
-      // compressSets: base.adjacentFaces().filter(face => face.numSides === 3),
-      compressSets: base.edges
-        .filter(e => e.twinFace().numSides === 3)
-        .map(edge => ({
-          edge: edge.twin(),
-          vertices: edge.twinFace().vertices,
-          polyhedron,
-        })),
-      getDirVec: ({ edge }) => {
-        return base
-          .centroid()
-          .sub(edge.midpoint())
-          .getNormalized();
-      },
+      edges: base.edges.filter(e => e.face.numSides === 3),
+      vertexListForEdge: e => e.face.vertices,
     });
   }
   if (inColumn(polyhedron.name, 'capstones', 'elongated')) {
@@ -66,16 +72,8 @@ function doCompress(polyhedron: Polyhedron) {
     const base = cap.boundary();
     return compressVertices({
       base,
-      compressSets: base.edges
-        .filter(e => e.face.numSides === 3)
-        .map(e => {
-          return {
-            face: e.twinFace(),
-            vertices: [...e.twinFace().vertices, e.next().v2],
-            polyhedron,
-          };
-        }),
-      getDirVec: ({ face }) => face.normal().getInverted(),
+      edges: base.edges.filter(e => e.face.numSides === 3),
+      vertexListForEdge: e => [...e.twinFace().vertices, e.next().v2],
     });
   }
   if (inColumn(polyhedron.name, 'capstones', 'bi-')) {
@@ -83,20 +81,8 @@ function doCompress(polyhedron: Polyhedron) {
     const base = cap.boundary();
     return compressVertices({
       base,
-      compressSets: base.edges
-        .filter(e => e.face.numSides === 3)
-        .map(e => {
-          return {
-            vertices: [...e.twinFace().vertices, e.next().v2],
-            polyhedron,
-            edge: e,
-          };
-        }),
-      getDirVec: ({ edge }) =>
-        base
-          .centroid()
-          .sub(edge.midpoint())
-          .getNormalized(),
+      edges: base.edges.filter(e => e.face.numSides === 3),
+      vertexListForEdge: e => [...e.twinFace().vertices, e.next().v2],
     });
   }
   if (inColumn(polyhedron.name, 'capstones', 'elongated bi-')) {
@@ -104,27 +90,17 @@ function doCompress(polyhedron: Polyhedron) {
     const base = cap.boundary();
     return compressVertices({
       base,
-      compressSets: base.edges
-        .filter(e => e.face.numSides === 3)
-        .map(edge => ({
-          edge,
-          polyhedron,
-          vertices: [
-            edge.next().v2,
-            ...edge.twinFace().vertices,
-            edge
-              .twin()
-              .next()
-              .next()
-              .twin()
-              .next().v2,
-          ],
-        })),
-      getDirVec: ({ edge }) =>
-        base
-          .centroid()
-          .sub(edge.midpoint())
-          .getNormalized(),
+      edges: base.edges.filter(e => e.face.numSides === 3),
+      vertexListForEdge: e => [
+        ...e.twinFace().vertices,
+        e.next().v2,
+        e
+          .twin()
+          .next()
+          .next()
+          .twin()
+          .next().v2,
+      ],
     });
   }
   throw new Error('Unsupported polyhedron');

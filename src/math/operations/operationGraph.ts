@@ -78,6 +78,7 @@ const getInverseOperation = (operation: string) => {
       return 'shorten';
     // FIXME decide on a name
     case 'enlarge':
+    case 'gyroenlarge':
       return 'compress';
     default:
       throw new Error(`Invalid operation: ${operation}`);
@@ -306,7 +307,7 @@ const baseCapstones = (() => {
           enlarge: 'P' + doubledNumSides,
         },
         [antiprism]: {
-          enlarge: 'A' + doubledNumSides,
+          gyroenlarge: 'A' + doubledNumSides,
         },
       });
     }
@@ -388,7 +389,7 @@ const baseCapstones = (() => {
           enlarge: cupolaRow.elongated,
         },
         [gyroelongated]: {
-          enlarge: cupolaRow.gyroelongated,
+          gyroenlarge: cupolaRow.gyroelongated,
         },
         [bi]: {
           enlarge: cupolaRow['bi-'][0],
@@ -397,7 +398,7 @@ const baseCapstones = (() => {
           enlarge: cupolaRow['elongated bi-'][0],
         },
         [gyroelongatedBi]: {
-          enlarge: cupolaRow['gyroelongated bi-'],
+          gyroenlarge: cupolaRow['gyroelongated bi-'],
         },
       });
     }
