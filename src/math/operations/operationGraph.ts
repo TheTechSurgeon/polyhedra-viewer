@@ -78,7 +78,6 @@ const getInverseOperation = (operation: string) => {
       return 'shorten';
     // FIXME decide on a name
     case 'enlarge':
-    case 'gyroenlarge':
       return 'compress';
     default:
       throw new Error(`Invalid operation: ${operation}`);
@@ -304,10 +303,10 @@ const baseCapstones = (() => {
       const doubledNumSides = numSides * 2;
       graph = graphMerge(graph, {
         [prism]: {
-          enlarge: 'P' + doubledNumSides,
+          enlarge: ['P' + doubledNumSides],
         },
         [antiprism]: {
-          gyroenlarge: 'A' + doubledNumSides,
+          enlarge: ['A' + doubledNumSides],
         },
       });
     }
@@ -389,7 +388,7 @@ const baseCapstones = (() => {
           enlarge: cupolaRow.elongated,
         },
         [gyroelongated]: {
-          gyroenlarge: cupolaRow.gyroelongated,
+          enlarge: cupolaRow.gyroelongated,
         },
         [bi]: {
           enlarge: cupolaRow['bi-'][0],
@@ -398,7 +397,7 @@ const baseCapstones = (() => {
           enlarge: cupolaRow['elongated bi-'][0],
         },
         [gyroelongatedBi]: {
-          gyroenlarge: cupolaRow['gyroelongated bi-'],
+          enlarge: cupolaRow['gyroelongated bi-'],
         },
       });
     }

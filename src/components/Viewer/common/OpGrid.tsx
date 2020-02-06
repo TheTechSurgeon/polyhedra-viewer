@@ -18,7 +18,7 @@ const opLayout: OpName[][] = [
   ['truncate', 'rectify', 'sharpen', 'dual'],
   ['expand', 'snub', 'contract', 'twist'],
   ['elongate', 'gyroelongate', 'shorten', 'turn'],
-  ['enlarge', 'gyroenlarge', 'compress', 'compress'],
+  ['enlarge', 'enlarge', 'compress', 'compress'],
   ['augment', 'augment', 'diminish', 'gyrate'],
 ];
 

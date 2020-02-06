@@ -331,7 +331,6 @@ function drawIcon(name: OpName) {
     case 'elongate':
       return <ElongateIcon styled="added" />;
 
-    case 'gyroenlarge':
     case 'gyroelongate':
       return (
         <ElongateIcon
