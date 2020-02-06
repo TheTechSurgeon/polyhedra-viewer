@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { allSolidNames } from 'data';
-import { getOperations } from '../operationUtils';
 import { operations } from '..';
 import { Polyhedron } from 'math/polyhedra';
 import { setupOperations } from '../operationTestUtils';
@@ -12,6 +11,9 @@ const excludedOperations = {};
 describe('applyOperation', () => {
   const polyhedra = _.map(allSolidNames, name => Polyhedron.get(name));
   _.forEach(operations, (operation, opName) => {
+    if (opName === 'enlarge') {
+      return;
+    }
     describe(opName, () => {
       _.forEach(polyhedra, polyhedron => {
         if (operation.canApplyTo(polyhedron)) {

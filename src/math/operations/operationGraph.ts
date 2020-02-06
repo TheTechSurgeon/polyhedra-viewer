@@ -90,6 +90,11 @@ const getInverseOperation = (operation: string) => {
 function makeBidirectional(graph: FullGraph) {
   const result: FullGraph = {};
   for (let [source, operations] of _.entries(graph)) {
+    // handle the case that we map a value to the thing.
+    // FIXME find a more elegant solution for this?
+    if (source === 'null') {
+      continue;
+    }
     for (let [operation, sinks] of _.entries(operations)) {
       for (let sink of sinks) {
         const sinkValue = sink.value;

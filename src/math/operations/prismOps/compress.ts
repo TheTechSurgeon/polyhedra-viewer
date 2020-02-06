@@ -135,7 +135,6 @@ function doAntiprismCompress(polyhedron: Polyhedron) {
     (base.sideLength() * (antiprismHeight(n) - antiprismHeight(n / 2))) / 2;
   const angle = (Math.PI / n / 2) * (isReverse ? -1 : 1);
 
-  // TODO this might fail depending on chirality of bicupolae
   const compressSets = [
     ...edges.map(e => ({
       dirVec: base
