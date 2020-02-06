@@ -1,7 +1,15 @@
+import { withOrigin } from 'math/geom';
 import { Polyhedron, Cap, VEList, Edge, Vertex } from 'math/polyhedra';
 import makeOperation from '../makeOperation';
 import { getTransformedVertices } from '../operationUtils';
 import { inColumn, inRow } from '../../polyhedra/tableUtils';
+import { antiprismHeight } from './prismUtils';
+
+function calculateScale(base: VEList) {
+  const resApothem =
+    base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
+  return base.apothem() - resApothem;
+}
 
 function everyOtherEdge(e0: Edge) {
   const result = [e0];
@@ -63,6 +71,107 @@ function getVertexFunction(polyhedron: Polyhedron): (e: Edge) => Vertex[] {
   throw new Error('Invalid polyhedron type');
 }
 
+function hasAntiprism(polyhedron: Polyhedron) {
+  return (
+    inColumn(polyhedron.name, 'prisms', 'antiprism') ||
+    inColumn(polyhedron.name, 'capstones', 'gyroelongated') ||
+    inColumn(polyhedron.name, 'capstones', 'gyroelongated bi-')
+  );
+}
+
+// FIXME fix antiprism height!
+function doAntiprismCompress(polyhedron: Polyhedron) {
+  const caps = Cap.getAll(polyhedron);
+  let bases: VEList[];
+  let edges: Edge[];
+  let edges2: Edge[];
+  let isReverse = false;
+  switch (caps.length) {
+    // Prism, our bases are our largest faces
+    case 0:
+      bases = polyhedron.facesWithNumSides(polyhedron.largestFace().numSides);
+      edges = bases[0].edges.filter((e, i) => i % 2 === 0);
+      edges2 = everyOtherEdge(
+        edges[0]
+          .twin()
+          .next()
+          .twin()
+          .prev()
+          .twin(),
+      );
+      break;
+    // gyroelongated cupola
+    case 1:
+      bases = [caps[0].boundary(), polyhedron.largestFace()];
+      edges = bases[0].edges.filter(e => e.face.numSides === 3);
+      edges2 = everyOtherEdge(
+        edges[0]
+          .twin()
+          .next()
+          .twin()
+          .prev()
+          .twin(),
+      );
+      break;
+    case 2:
+      bases = caps.map(c => c.boundary());
+      edges = bases[0].edges.filter(e => e.face.numSides === 3);
+      edges2 = bases[1].edges.filter(e => e.face.numSides === 3);
+      isReverse =
+        edges[0]
+          .twin()
+          .next()
+          .twin()
+          .prev()
+          .twinFace().numSides !== 3;
+      break;
+    default:
+      throw new Error('Invalid number of capstones');
+  }
+  const [base, base2] = bases;
+  const n = base.numSides;
+  const horizScale = calculateScale(base);
+  const vertScale =
+    (base.sideLength() * (antiprismHeight(n) - antiprismHeight(n / 2))) / 2;
+  const angle = (Math.PI / n / 2) * (isReverse ? -1 : 1);
+
+  // TODO this might fail depending on chirality of bicupolae
+  const compressSets = [
+    ...edges.map(e => ({
+      dirVec: base
+        .centroid()
+        .sub(e.midpoint())
+        .getNormalized(),
+      base,
+      vertices: e.face.numSides === 3 ? e.face.vertices : e.vertices,
+      polyhedron,
+    })),
+    ...edges2.map(e => ({
+      dirVec: base2
+        .centroid()
+        .sub(e.midpoint())
+        .getNormalized(),
+      base: base2,
+      vertices: e.face.numSides === 3 ? e.face.vertices : e.vertices,
+      polyhedron,
+    })),
+  ];
+  const endVertices = getTransformedVertices(compressSets, ({ base, dirVec }) =>
+    withOrigin(base.normalRay(), v =>
+      v
+        .add(dirVec.scale(horizScale))
+        .sub(base.normal().scale(vertScale))
+        .getRotatedAroundAxis(base.normal(), angle),
+    ),
+  );
+  return {
+    animationData: {
+      start: polyhedron,
+      endVertices,
+    },
+  };
+}
+
 // FIXME octahedron can be enlarged two ways!!!
 function doCompress(polyhedron: Polyhedron) {
   let base: VEList, edges: Edge[];
@@ -99,9 +208,7 @@ function doCompress(polyhedron: Polyhedron) {
   }));
 
   // How far each facet needs to be pushed in
-  const resApothem =
-    base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
-  const scale = base.apothem() - resApothem;
+  const scale = calculateScale(base);
 
   // Push the vertices in and return the updated data
   const endVertices = getTransformedVertices(compressSets, ({ dirVec }) => v =>
@@ -117,6 +224,8 @@ function doCompress(polyhedron: Polyhedron) {
 
 export const compress = makeOperation('compress', {
   apply(polyhedron) {
-    return doCompress(polyhedron);
+    return hasAntiprism(polyhedron)
+      ? doAntiprismCompress(polyhedron)
+      : doCompress(polyhedron);
   },
 });

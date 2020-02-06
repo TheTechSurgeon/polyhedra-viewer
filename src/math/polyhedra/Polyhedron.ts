@@ -122,6 +122,10 @@ export default class Polyhedron {
     return find(this.faces, { numSides: n });
   }
 
+  facesWithNumSides(n: number) {
+    return _.filter(this.faces, { numSides: n });
+  }
+
   // The list of the type of faces this polyhedron has, ordered
   faceTypes() {
     return _(this.faces)
