@@ -454,6 +454,14 @@ const baseAugmentations = (() => {
   return graph;
 })();
 
+const augmentedPrismEnlarge = (() => {
+  return {
+    J49: { enlarge: 'J54' },
+    J50: { enlarge: 'J56' },
+    J51: { enlarge: 'J57' },
+  };
+})();
+
 const diminishedIcosahedra = (() => {
   return {
     J63: {
@@ -574,6 +582,7 @@ const normalized = [
   archimedean,
   baseCapstones,
   baseAugmentations,
+  augmentedPrismEnlarge,
   diminishedIcosahedra,
   rhombicosidodecahedra,
   elementary,

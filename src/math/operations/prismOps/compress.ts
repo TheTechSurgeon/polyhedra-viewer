@@ -1,7 +1,17 @@
 import { Polyhedron, Cap, VEList, Edge, Vertex } from 'math/polyhedra';
 import makeOperation from '../makeOperation';
 import { getTransformedVertices } from '../operationUtils';
-import { inColumn } from '../../polyhedra/tableUtils';
+import { inColumn, inRow } from '../../polyhedra/tableUtils';
+
+function everyOtherEdge(e0: Edge) {
+  const result = [e0];
+  let e = e0.next().next();
+  while (!e.equals(e0)) {
+    result.push(e);
+    e = e.next().next();
+  }
+  return result;
+}
 
 /**
  * Return a function that calculate the vertices in a "facet" to compress
@@ -38,6 +48,18 @@ function getVertexFunction(polyhedron: Polyhedron): (e: Edge) => Vertex[] {
         .next().v2,
     ];
   }
+  // For an augmented hexagonal prism, check if the edge is attached to
+  // a square or a pyramid
+  if (inRow(polyhedron.name, 'augmented', 'hexagonal prism')) {
+    return e => {
+      if (e.twinFace().numSides === 4) {
+        return e.twinFace().vertices;
+      } else {
+        const tip = e.twin().next().v2;
+        return [tip, ...tip.adjacentVertices()];
+      }
+    };
+  }
   throw new Error('Invalid polyhedron type');
 }
 
@@ -51,6 +73,11 @@ function doCompress(polyhedron: Polyhedron) {
     // Use the largest face as a base and just pick every other edge
     base = polyhedron.largestFace();
     edges = base.edges.filter((_, i) => i % 2 === 0);
+  } else if (caps[0].type === 'pyramid') {
+    // If we are an augmented prism, use the largest face and make sure
+    // the augmentee is one of the edges
+    base = polyhedron.largestFace();
+    edges = everyOtherEdge(base.edges.find(e => e.twinFace().numSides === 3)!);
   } else {
     // If we are a cupola, use the cupola boundary as a base
     // and pick the edges adjacent to triangles, since those are the ones
