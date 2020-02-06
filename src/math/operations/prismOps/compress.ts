@@ -1,41 +1,82 @@
 import { Polyhedron, Cap, VEList, Edge, Vertex } from 'math/polyhedra';
-import { withOrigin } from 'math/geom';
 import makeOperation from '../makeOperation';
 import { getTransformedVertices } from '../operationUtils';
 import { inColumn } from '../../polyhedra/tableUtils';
 
-interface CompressArgs {
-  /** The regular polygonal base used to calculate the distance to compress */
-  base: VEList;
-  /** The list of edges of the base to compress: should be every other edge of the base */
-  edges: Edge[];
-  /** The vertices to compress for each edge */
-  vertexListForEdge: (e: Edge) => Vertex[];
-  /** Whether to apply a twist to the compression (for antiprisms) */
-  twist?: boolean;
+/**
+ * Return a function that calculate the vertices in a "facet" to compress
+ * per edge-to-compress.
+ */
+function getVertexFunction(polyhedron: Polyhedron): (e: Edge) => Vertex[] {
+  // For prisms, return the square faces
+  if (inColumn(polyhedron.name, 'prisms', 'prism')) {
+    return e => e.twinFace().vertices;
+  }
+  // For cupolae, return the cupola triangles
+  if (inColumn(polyhedron.name, 'capstones', '--')) {
+    return e => e.face.vertices;
+  }
+  // For elongated cupolae, return the square and the cupola tip
+  if (inColumn(polyhedron.name, 'capstones', 'elongated')) {
+    return e => [...e.twinFace().vertices, e.next().v2];
+  }
+  // For bicupolae, return the vertices of the two triangles
+  if (inColumn(polyhedron.name, 'capstones', 'bi-')) {
+    return e => [...e.twinFace().vertices, e.next().v2];
+  }
+  // For elongated bicupolae, return the square prism side and
+  // the two cupola triangle tips
+  if (inColumn(polyhedron.name, 'capstones', 'elongated bi-')) {
+    return e => [
+      ...e.twinFace().vertices,
+      e.next().v2,
+      e
+        .twin()
+        .next()
+        .next()
+        .twin()
+        .next().v2,
+    ];
+  }
+  throw new Error('Invalid polyhedron type');
 }
 
 // FIXME octahedron can be enlarged two ways!!!
-function compressVertices({
-  twist,
-  base,
-  edges,
-  vertexListForEdge,
-}: CompressArgs) {
-  const polyhedron = base.polyhedron;
-  const resApothem =
-    base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
-  const scale = base.apothem() - resApothem;
+function doCompress(polyhedron: Polyhedron) {
+  let base: VEList, edges: Edge[];
 
+  const caps = Cap.getAll(polyhedron);
+  if (caps.length === 0) {
+    // If we don't have access to a cupola (i.e., we are a prism)
+    // Use the largest face as a base and just pick every other edge
+    base = polyhedron.largestFace();
+    edges = base.edges.filter((_, i) => i % 2 === 0);
+  } else {
+    // If we are a cupola, use the cupola boundary as a base
+    // and pick the edges adjacent to triangles, since those are the ones
+    // that need to get compressed
+    base = caps[0].boundary();
+    edges = base.edges.filter(e => e.face.numSides === 3);
+  }
+
+  // Determine the facets that need to be pushed in, depending on what kind of polyhedron
+  // we are dealing with
+  const vertexFunc = getVertexFunction(polyhedron);
   const compressSets = edges.map(e => ({
     dirVec: base
       .centroid()
       .sub(e.midpoint())
       .getNormalized(),
-    vertices: vertexListForEdge(e),
+    vertices: vertexFunc(e),
     polyhedron,
   }));
 
+  // How far each facet needs to be pushed in
+  const resApothem =
+    base.sideLength() / (2 * Math.tan((2 * Math.PI) / base.numSides));
+  const scale = base.apothem() - resApothem;
+
+  // Push the vertices in and return the updated data
   const endVertices = getTransformedVertices(compressSets, ({ dirVec }) => v =>
     v.add(dirVec.scale(scale)),
   );
@@ -45,65 +86,6 @@ function compressVertices({
       endVertices,
     },
   };
-}
-
-// TODO we can generalize this even further based on whether the base is a Face or a capstone boundary
-// but I want to wait until we have the antiprisms in there
-function doCompress(polyhedron: Polyhedron) {
-  if (inColumn(polyhedron.name, 'prisms', 'prism')) {
-    const base = polyhedron.largestFace();
-    return compressVertices({
-      base,
-      edges: base.edges.filter((e, index) => index % 2 === 0),
-      vertexListForEdge: e => e.twinFace().vertices,
-    });
-  }
-  if (inColumn(polyhedron.name, 'capstones', '--')) {
-    const cap = Cap.getAll(polyhedron)[0];
-    const base = cap.boundary();
-    return compressVertices({
-      base,
-      edges: base.edges.filter(e => e.face.numSides === 3),
-      vertexListForEdge: e => e.face.vertices,
-    });
-  }
-  if (inColumn(polyhedron.name, 'capstones', 'elongated')) {
-    const cap = Cap.getAll(polyhedron)[0];
-    const base = cap.boundary();
-    return compressVertices({
-      base,
-      edges: base.edges.filter(e => e.face.numSides === 3),
-      vertexListForEdge: e => [...e.twinFace().vertices, e.next().v2],
-    });
-  }
-  if (inColumn(polyhedron.name, 'capstones', 'bi-')) {
-    const cap = Cap.getAll(polyhedron)[0];
-    const base = cap.boundary();
-    return compressVertices({
-      base,
-      edges: base.edges.filter(e => e.face.numSides === 3),
-      vertexListForEdge: e => [...e.twinFace().vertices, e.next().v2],
-    });
-  }
-  if (inColumn(polyhedron.name, 'capstones', 'elongated bi-')) {
-    const cap = Cap.getAll(polyhedron)[0];
-    const base = cap.boundary();
-    return compressVertices({
-      base,
-      edges: base.edges.filter(e => e.face.numSides === 3),
-      vertexListForEdge: e => [
-        ...e.twinFace().vertices,
-        e.next().v2,
-        e
-          .twin()
-          .next()
-          .next()
-          .twin()
-          .next().v2,
-      ],
-    });
-  }
-  throw new Error('Unsupported polyhedron');
 }
 
 export const compress = makeOperation('compress', {
