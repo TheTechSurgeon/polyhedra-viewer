@@ -310,9 +310,9 @@ const baseCapstones = (() => {
         [prism]: {
           enlarge: ['P' + doubledNumSides],
         },
-        [antiprism]: {
-          enlarge: ['A' + doubledNumSides],
-        },
+        // [antiprism]: {
+        //   enlarge: ['A' + doubledNumSides],
+        // },
       });
     }
   });

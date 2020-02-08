@@ -49,7 +49,7 @@ function getOppositeCaps(polyhedron: Polyhedron) {
   return undefined;
 }
 
-function getOppositePrismFaces(polyhedron: Polyhedron) {
+export function getOppositePrismFaces(polyhedron: Polyhedron) {
   const face1 = _.maxBy(
     _.filter(polyhedron.faces, face => {
       const faceCounts = _.countBy(
