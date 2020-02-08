@@ -310,9 +310,9 @@ const baseCapstones = (() => {
         [prism]: {
           enlarge: ['P' + doubledNumSides],
         },
-        // [antiprism]: {
-        //   enlarge: ['A' + doubledNumSides],
-        // },
+        [antiprism]: {
+          enlarge: ['A' + doubledNumSides],
+        },
       });
     }
   });
@@ -392,18 +392,18 @@ const baseCapstones = (() => {
         [elongated]: {
           enlarge: cupolaRow.elongated,
         },
-        // [gyroelongated]: {
-        //   enlarge: cupolaRow.gyroelongated,
-        // },
+        [gyroelongated]: {
+          enlarge: cupolaRow.gyroelongated,
+        },
         [bi]: {
           enlarge: cupolaRow['bi-'][0],
         },
         [elongatedBi]: {
           enlarge: cupolaRow['elongated bi-'][0],
         },
-        // [gyroelongatedBi]: {
-        //   enlarge: cupolaRow['gyroelongated bi-'],
-        // },
+        [gyroelongatedBi]: {
+          enlarge: cupolaRow['gyroelongated bi-'],
+        },
       });
     }
   });

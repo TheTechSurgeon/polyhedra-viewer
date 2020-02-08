@@ -34,6 +34,11 @@ function getExpandEdges(polyhedron: Polyhedron) {
       polyhedron.faces.find(f => f.numSides !== 4) ?? polyhedron.getFace();
     return face.edges.map(e => e.twin().next());
   }
+  // if (inColumn(polyhedron.name, 'prisms', 'antiprism')) {
+  //   const face =
+  //     polyhedron.faces.find(f => f.numSides !== 3) ?? polyhedron.getFace();
+  //   return face.edges.map(e => e.twin().next());
+  // }
   const caps = Cap.getAll(polyhedron);
   if (inColumn(polyhedron.name, 'capstones', '--')) {
     return caps[0].boundary().edges.map(e => e.next());
@@ -80,8 +85,34 @@ function getExpandEdges(polyhedron: Polyhedron) {
   throw new Error('Unsupported polyhedron ' + polyhedron.name);
 }
 
+function getExpandEdgesGyro(polyhedron: Polyhedron) {
+  if (inColumn(polyhedron.name, 'prisms', 'antiprism')) {
+    const face =
+      polyhedron.faces.find(f => f.numSides !== 3) ?? polyhedron.getFace();
+    return face.edges.map(e => e.twin().next());
+  }
+  const caps = Cap.getAll(polyhedron);
+  if (inColumn(polyhedron.name, 'capstones', 'gyroelongated')) {
+    return _.flatMap(caps[0].boundary().edges, e => [
+      e.next(),
+      e.twin().prev(),
+    ]);
+  }
+  if (inColumn(polyhedron.name, 'capstones', 'gyroelongated bi-')) {
+    return _.flatMap(caps, cap =>
+      cap.boundary().edges.map(e => e.next()),
+    ).concat(caps[0].boundary().edges.map(e => e.twin().prev()));
+  }
+  throw new Error('Unsupported polyhedron ' + polyhedron.name);
+}
+
+function doEnlargeGyro(polyhedron: Polyhedron) {
+  // return polyhedron;
+  const duplicated = expandEdges(polyhedron, getExpandEdgesGyro(polyhedron));
+}
+
 // FIXME octahedron can be enlarged two ways!!!
-function doEnlarge(polyhedron: Polyhedron) {
+function doEnlargeOrtho(polyhedron: Polyhedron) {
   const scale = calculateScale(polyhedron);
   const duplicated = expandEdges(polyhedron, getExpandEdges(polyhedron));
   const { base, edges } = getBaseAndTransformEdges(duplicated, true);
@@ -104,6 +135,10 @@ function doEnlarge(polyhedron: Polyhedron) {
       endVertices,
     },
   };
+}
+
+function doEnlarge(polyhedron: Polyhedron) {
+  return doEnlargeOrtho(polyhedron);
 }
 
 export const enlarge = makeOperation('enlarge', {

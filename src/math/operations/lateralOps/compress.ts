@@ -16,6 +16,27 @@ function calculateScale(base: VEList) {
   return base.apothem() - resApothem;
 }
 
+function getGyroOpposite(edge: Edge) {
+  return edge
+    .twin()
+    .next()
+    .twin()
+    .prev()
+    .twin();
+}
+
+function gyroCompressSets(edges: Edge[], base: VEList) {
+  return edges.map(e => ({
+    dirVec: base
+      .centroid()
+      .sub(e.midpoint())
+      .getNormalized(),
+    base,
+    vertices: e.face.numSides === 3 ? e.face.vertices : e.vertices,
+    polyhedron: base.polyhedron,
+  }));
+}
+
 function doAntiprismCompress(polyhedron: Polyhedron) {
   const caps = Cap.getAll(polyhedron);
   let bases: VEList[];
@@ -27,39 +48,19 @@ function doAntiprismCompress(polyhedron: Polyhedron) {
     case 0:
       bases = polyhedron.facesWithNumSides(polyhedron.largestFace().numSides);
       edges = bases[0].edges.filter((e, i) => i % 2 === 0);
-      edges2 = everyOtherEdge(
-        edges[0]
-          .twin()
-          .next()
-          .twin()
-          .prev()
-          .twin(),
-      );
+      edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
       break;
     // gyroelongated cupola
     case 1:
       bases = [caps[0].boundary(), polyhedron.largestFace()];
       edges = bases[0].edges.filter(e => e.face.numSides === 3);
-      edges2 = everyOtherEdge(
-        edges[0]
-          .twin()
-          .next()
-          .twin()
-          .prev()
-          .twin(),
-      );
+      edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
       break;
     case 2:
       bases = caps.map(c => c.boundary());
       edges = bases[0].edges.filter(e => e.face.numSides === 3);
       edges2 = bases[1].edges.filter(e => e.face.numSides === 3);
-      isReverse =
-        edges[0]
-          .twin()
-          .next()
-          .twin()
-          .prev()
-          .twinFace().numSides !== 3;
+      isReverse = getGyroOpposite(edges[0]).face.numSides !== 3;
       break;
     default:
       throw new Error('Invalid number of capstones');
@@ -72,24 +73,8 @@ function doAntiprismCompress(polyhedron: Polyhedron) {
   const angle = (Math.PI / n / 2) * (isReverse ? -1 : 1);
 
   const compressSets = [
-    ...edges.map(e => ({
-      dirVec: base
-        .centroid()
-        .sub(e.midpoint())
-        .getNormalized(),
-      base,
-      vertices: e.face.numSides === 3 ? e.face.vertices : e.vertices,
-      polyhedron,
-    })),
-    ...edges2.map(e => ({
-      dirVec: base2
-        .centroid()
-        .sub(e.midpoint())
-        .getNormalized(),
-      base: base2,
-      vertices: e.face.numSides === 3 ? e.face.vertices : e.vertices,
-      polyhedron,
-    })),
+    ...gyroCompressSets(edges, base),
+    ...gyroCompressSets(edges2, base2),
   ];
   const endVertices = getTransformedVertices(compressSets, ({ base, dirVec }) =>
     withOrigin(base.normalRay(), v =>
