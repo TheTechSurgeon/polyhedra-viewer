@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { flatMapUniq } from 'utils';
+import { repeat, flatMapUniq } from 'utils';
 import { Vec3D } from 'math/geom';
 import Polyhedron from './Polyhedron';
 import Face from './Face';
@@ -9,7 +9,7 @@ import Edge from './Edge';
 import VEList from './VEList';
 
 type CapType = 'pyramid' | 'cupola' | 'rotunda' | 'fastigium' | 'prism';
-type FaceConfiguration = { [key: string]: number };
+type FaceConfiguration = number[];
 
 // Find the boundary of a connected set of faces
 function getBoundary(faces: Face[]) {
@@ -131,8 +131,7 @@ export default abstract class Cap implements VertexList {
 
   isValid({ noFaceCheck, noBoundaryCheck }: ValidateOptions = {}) {
     const matchFaces = _.every(this.innerVertices(), vertex => {
-      const faceCount = _.countBy(vertex.adjacentFaces(), 'numSides');
-      return _.isEqual(faceCount, this.faceConfiguration);
+      return _.isEqual(vertex.configuration(), this.faceConfiguration);
     });
     if (!matchFaces) {
       return false;
@@ -148,30 +147,28 @@ export default abstract class Cap implements VertexList {
 
 class Pyramid extends Cap {
   constructor(polyhedron: Polyhedron, vertex: Vertex) {
-    super(polyhedron, [vertex], 'pyramid', vertex.vec, {
-      '3': vertex.adjacentEdges().length,
-    });
+    super(
+      polyhedron,
+      [vertex],
+      'pyramid',
+      vertex.vec,
+      repeat(3, vertex.adjacentEdges().length),
+    );
   }
   static getAll = createMapper('vertices', Pyramid);
 }
 
 class Fastigium extends Cap {
   constructor(polyhedron: Polyhedron, edge: Edge) {
-    const config = { '3': 1, '4': 2 };
-    super(polyhedron, edge.vertices, 'fastigium', edge.midpoint(), config);
+    super(polyhedron, edge.vertices, 'fastigium', edge.midpoint(), [3, 4, 4]);
   }
   static getAll = createMapper('edges', Fastigium);
 }
 
 class Cupola extends Cap {
   constructor(polyhedron: Polyhedron, face: Face) {
-    super(
-      polyhedron,
-      face.vertices,
-      'cupola',
-      face.centroid(),
-      _.countBy([3, 4, 4, face.numSides]),
-    );
+    const config = [3, 4, face.numSides, 4];
+    super(polyhedron, face.vertices, 'cupola', face.centroid(), config);
   }
   static getAll = createMapper('faces', Cupola);
 }
@@ -183,7 +180,7 @@ class Rotunda extends Cap {
       flatMapUniq(face.vertices, v => v.adjacentVertices(), 'index'),
       'rotunda',
       face.centroid(),
-      { '5': 2, '3': 2 },
+      [3, 5, 3, 5],
     );
   }
   static getAll = createMapper('faces', Rotunda);

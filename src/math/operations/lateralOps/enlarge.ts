@@ -98,7 +98,7 @@ function doEnlarge(polyhedron: Polyhedron) {
     // Use the largest face as a base and just pick every other edge
     base = duplicated.largestFace();
     // edges = base.edges.filter((_, i) => i % 2 === 0);
-    edges = base.edges.filter(e => e.length() > 0.001);
+    edges = base.edges.filter(e => e.isValid());
   } else if (caps[0].type === 'pyramid') {
     console.log('found only pyramids');
     // If we are an augmented prism, use the largest face and make sure
@@ -111,20 +111,15 @@ function doEnlarge(polyhedron: Polyhedron) {
     // and pick the edges adjacent to triangles, since those are the ones
     // that need to get compressed
 
-    const cap = caps.find(
-      cap =>
-        // make sure every triangular face in the cap is valid
-        // (rules out bad ones in triangular bipyramid)
-        _.every(
-          cap.boundary().edges.filter(e => e.face.numSides === 3),
-          e => e.length() > 0.001,
-        ) &&
-        // make sure every square face in the cap is invalid
-        // (rules out bado ones in elongated bicupolae)
-        _.every(
-          cap.boundary().edges.filter(e => e.face.numSides === 4),
-          e => e.length() < 0.001,
-        ),
+    const cap = caps.find(cap =>
+      // make sure every triangular face in the cap is valid
+      // (rules out bad ones in triangular bipyramid)
+      // make sure every square face in the cap is invalid
+      // (rules out bado ones in elongated bicupolae)
+      _.every(
+        cap.boundary().edges.filter(e => e.face.numSides === 4),
+        e => !e.isValid(),
+      ),
     );
     base = cap!.boundary();
     edges = base.edges.filter(e => e.face.numSides === 3);
