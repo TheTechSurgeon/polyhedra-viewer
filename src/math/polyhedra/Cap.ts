@@ -41,13 +41,18 @@ interface Constructor<T> {
   new (polyhedron: Polyhedron, arg: T): Cap;
 }
 function createMapper<T>(property: string, Base: Constructor<T>) {
-  return (polyhedron: Polyhedron) => {
+  return (polyhedron: Polyhedron, opts: ValidateOptions = {}) => {
     const mapper = _.get(polyhedron, property);
     const values: T[] = _.isFunction(mapper) ? mapper() : mapper;
     return values
       .map(arg => new Base(polyhedron, arg))
-      .filter(cap => cap.isValid());
+      .filter(cap => cap.isValid(opts));
   };
+}
+
+interface ValidateOptions {
+  noFaceCheck?: boolean;
+  noBoundaryCheck?: boolean;
 }
 
 export default abstract class Cap implements VertexList {
@@ -68,15 +73,15 @@ export default abstract class Cap implements VertexList {
     return _.minBy(caps, cap => cap.topPoint.distanceTo(hitPoint));
   }
 
-  static getAll(polyhedron: Polyhedron): Cap[] {
-    const pyramids = Pyramid.getAll(polyhedron);
+  static getAll(polyhedron: Polyhedron, opts: ValidateOptions = {}): Cap[] {
+    const pyramids = Pyramid.getAll(polyhedron, opts);
     if (pyramids.length > 0) return pyramids;
 
-    const fastigium = Fastigium.getAll(polyhedron);
+    const fastigium = Fastigium.getAll(polyhedron, opts);
     if (fastigium.length > 0) return fastigium;
 
-    const cupolaRotunda = Cupola.getAll(polyhedron).concat(
-      Rotunda.getAll(polyhedron),
+    const cupolaRotunda = Cupola.getAll(polyhedron, opts).concat(
+      Rotunda.getAll(polyhedron, opts),
     );
     if (cupolaRotunda.length > 0) return cupolaRotunda;
     return [];
@@ -124,16 +129,20 @@ export default abstract class Cap implements VertexList {
     return this.boundary().normalRay();
   }
 
-  isValid() {
+  isValid({ noFaceCheck, noBoundaryCheck }: ValidateOptions = {}) {
     const matchFaces = _.every(this.innerVertices(), vertex => {
       const faceCount = _.countBy(vertex.adjacentFaces(), 'numSides');
       return _.isEqual(faceCount, this.faceConfiguration);
     });
-    return (
-      matchFaces &&
-      _.every(this.faces(), face => face.isValid()) &&
-      this.boundary().isPlanar()
-    );
+    if (!matchFaces) {
+      return false;
+    }
+
+    const facesValid =
+      noFaceCheck || _.every(this.faces(), face => face.isValid());
+    const boundaryValid = noBoundaryCheck || this.boundary().isPlanar();
+
+    return facesValid && boundaryValid;
   }
 }
 

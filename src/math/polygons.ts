@@ -22,3 +22,10 @@ export const polygonPrefixes = bimap({
   8: 'octagonal',
   10: 'decagonal',
 });
+
+/**
+ * Return the apothem of an `n`-gon of side length `s`
+ */
+export function apothem(n: number, s: number) {
+  return s / (2 * Math.tan(Math.PI / n));
+}

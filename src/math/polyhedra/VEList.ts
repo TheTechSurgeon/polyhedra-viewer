@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Vec3D } from 'math/geom';
+import { apothem } from 'math/polygons';
 
 import {
   PRECISION,
@@ -61,7 +62,7 @@ export default class VEList implements VertexList {
   }
 
   apothem() {
-    return this.sideLength() / (2 * Math.tan(Math.PI / this.numSides));
+    return apothem(this.numSides, this.sideLength());
   }
 
   /** Get the area of a *regular* polygon */
