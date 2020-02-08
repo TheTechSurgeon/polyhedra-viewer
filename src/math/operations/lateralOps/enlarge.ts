@@ -1,12 +1,11 @@
 import _ from 'lodash';
 import { apothem } from 'math/polygons';
-import { Polyhedron, Cap, Edge, VEList } from 'math/polyhedra';
+import { Polyhedron, Cap, VEList } from 'math/polyhedra';
 import makeOperation from '../makeOperation';
 import { inColumn, inRow } from '../../polyhedra/tableUtils';
 
 import { expandEdges, getTransformedVertices } from '../operationUtils';
 import {
-  everyOtherEdge,
   // hasAntiprism,
   getBaseAndTransformEdges,
   getVertexFunction,
