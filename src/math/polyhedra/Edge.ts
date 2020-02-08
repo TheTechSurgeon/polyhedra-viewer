@@ -1,4 +1,4 @@
-import { getMidpoint } from 'math/geom';
+import { getMidpoint, PRECISION } from 'math/geom';
 import Polyhedron from './Polyhedron';
 import Vertex, { VertexList } from './Vertex';
 
@@ -35,6 +35,10 @@ export default class Edge implements VertexList {
 
   length() {
     return this.v1.vec.distanceTo(this.v2.vec);
+  }
+
+  isValid() {
+    return this.length() > PRECISION;
   }
 
   midpoint() {

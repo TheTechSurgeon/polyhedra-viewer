@@ -90,6 +90,6 @@ export default class VEList implements VertexList {
   }
 
   isValid() {
-    return _.every(this.edges, edge => edge.length() > PRECISION);
+    return _.every(this.edges, edge => edge.isValid());
   }
 }

@@ -310,9 +310,9 @@ const baseCapstones = (() => {
         [prism]: {
           enlarge: ['P' + doubledNumSides],
         },
-        [antiprism]: {
-          enlarge: ['A' + doubledNumSides],
-        },
+        // [antiprism]: {
+        //   enlarge: ['A' + doubledNumSides],
+        // },
       });
     }
   });
@@ -392,18 +392,18 @@ const baseCapstones = (() => {
         [elongated]: {
           enlarge: cupolaRow.elongated,
         },
-        [gyroelongated]: {
-          enlarge: cupolaRow.gyroelongated,
-        },
+        // [gyroelongated]: {
+        //   enlarge: cupolaRow.gyroelongated,
+        // },
         [bi]: {
           enlarge: cupolaRow['bi-'][0],
         },
         [elongatedBi]: {
           enlarge: cupolaRow['elongated bi-'][0],
         },
-        [gyroelongatedBi]: {
-          enlarge: cupolaRow['gyroelongated bi-'],
-        },
+        // [gyroelongatedBi]: {
+        //   enlarge: cupolaRow['gyroelongated bi-'],
+        // },
       });
     }
   });
@@ -458,13 +458,13 @@ const baseAugmentations = (() => {
   return graph;
 })();
 
-const augmentedPrismEnlarge = (() => {
-  return {
-    J49: { enlarge: 'J54' },
-    J50: { enlarge: 'J56' },
-    J51: { enlarge: 'J57' },
-  };
-})();
+// const augmentedPrismEnlarge = (() => {
+//   return {
+//     J49: { enlarge: 'J54' },
+//     J50: { enlarge: 'J56' },
+//     J51: { enlarge: 'J57' },
+//   };
+// })();
 
 const diminishedIcosahedra = (() => {
   return {
@@ -586,7 +586,7 @@ const normalized = [
   archimedean,
   baseCapstones,
   baseAugmentations,
-  augmentedPrismEnlarge,
+  // augmentedPrismEnlarge,
   diminishedIcosahedra,
   rhombicosidodecahedra,
   elementary,

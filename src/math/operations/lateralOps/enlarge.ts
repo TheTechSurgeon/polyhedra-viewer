@@ -7,15 +7,15 @@ import { inColumn, inRow } from '../../polyhedra/tableUtils';
 import { expandEdges, getTransformedVertices } from '../operationUtils';
 import {
   everyOtherEdge,
-  hasAntiprism,
+  // hasAntiprism,
   getVertexFunction,
 } from './lateralUtils';
 
 function calculateScale(polyhedron: Polyhedron) {
   let base: VEList;
-  if (hasAntiprism(polyhedron)) {
-    throw new Error('antiprisms not yet supported');
-  }
+  // if (hasAntiprism(polyhedron)) {
+  //   throw new Error('antiprisms not yet supported');
+  // }
   // Here the base is only used to calculate the scale
   const caps = Cap.getAll(polyhedron);
   if (caps.length === 0) {
@@ -45,15 +45,37 @@ function getExpandEdges(polyhedron: Polyhedron) {
     ]);
   }
   if (inColumn(polyhedron.name, 'capstones', 'bi-')) {
-    return _.flatMap(caps, cap => cap.boundary().edges.map(e => e.next()));
+    return _.flatMap(caps[0].boundary().edges, e => [
+      e.next(),
+      e.twin().next(),
+    ]);
   }
   if (inColumn(polyhedron.name, 'capstones', 'elongated bi-')) {
     return _.flatMap(caps, cap =>
       cap.boundary().edges.map(e => e.next()),
     ).concat(caps[0].boundary().edges.map(e => e.twin().prev()));
   }
-  if (inRow(polyhedron.name, 'augmented', 'hexagonal prism')) {
-    throw new Error('augmented prisms arent supported yet');
+  if (inRow(polyhedron.name, 'augmented', 'triangular prism')) {
+    const tips = _.flatMap(caps.map(cap => cap.innerVertices())).map(
+      v => v.index,
+    );
+    const face = polyhedron.faces.find(f =>
+      _.every(
+        f.edges,
+        e =>
+          e.twinFace().numSides === 4 ||
+          tips.includes(e.twin().next().v2.index),
+      ),
+    );
+    return face!.edges.map(e =>
+      e.twinFace().numSides === 4
+        ? e.twin().next()
+        : e
+            .twin()
+            .next()
+            .twin()
+            .next(),
+    );
   }
   throw new Error('Unsupported polyhedron ' + polyhedron.name);
 }
@@ -69,6 +91,7 @@ function doEnlarge(polyhedron: Polyhedron) {
     noFaceCheck: true,
     noBoundaryCheck: true,
   });
+  // TODO deduplicate with the one for compress
   if (caps.length === 0) {
     console.log('found no caps');
     // If we don't have access to a cupola (i.e., we are a prism)

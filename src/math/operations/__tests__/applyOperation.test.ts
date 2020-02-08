@@ -11,9 +11,9 @@ const excludedOperations = {};
 describe('applyOperation', () => {
   const polyhedra = _.map(allSolidNames, name => Polyhedron.get(name));
   _.forEach(operations, (operation, opName) => {
-    if (opName === 'enlarge') {
-      return;
-    }
+    // if (opName === 'enlarge') {
+    //   return;
+    // }
     describe(opName, () => {
       _.forEach(polyhedra, polyhedron => {
         if (operation.canApplyTo(polyhedron)) {
