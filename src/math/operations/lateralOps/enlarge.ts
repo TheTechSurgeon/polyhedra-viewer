@@ -8,6 +8,7 @@ import { expandEdges, getTransformedVertices } from '../operationUtils';
 import {
   everyOtherEdge,
   // hasAntiprism,
+  getBaseAndTransformEdges,
   getVertexFunction,
 } from './lateralUtils';
 
@@ -83,47 +84,8 @@ function getExpandEdges(polyhedron: Polyhedron) {
 // FIXME octahedron can be enlarged two ways!!!
 function doEnlarge(polyhedron: Polyhedron) {
   const scale = calculateScale(polyhedron);
-  // handle only pyramids for now
   const duplicated = expandEdges(polyhedron, getExpandEdges(polyhedron));
-  // const edges = duplicated.largestFace().edges.filter(e => e.length() > 0.001);
-  let base: VEList, edges: Edge[];
-  const caps = Cap.getAll(duplicated, {
-    noFaceCheck: true,
-    noBoundaryCheck: true,
-  });
-  // TODO deduplicate with the one for compress
-  if (caps.length === 0) {
-    console.log('found no caps');
-    // If we don't have access to a cupola (i.e., we are a prism)
-    // Use the largest face as a base and just pick every other edge
-    base = duplicated.largestFace();
-    // edges = base.edges.filter((_, i) => i % 2 === 0);
-    edges = base.edges.filter(e => e.isValid());
-  } else if (caps[0].type === 'pyramid') {
-    console.log('found only pyramids');
-    // If we are an augmented prism, use the largest face and make sure
-    // the augmentee is one of the edges
-    base = duplicated.largestFace();
-    edges = everyOtherEdge(base.edges.find(e => e.twinFace().numSides === 3)!);
-  } else {
-    console.log('found', caps.length, 'cupolae');
-    // If we are a cupola, use the cupola boundary as a base
-    // and pick the edges adjacent to triangles, since those are the ones
-    // that need to get compressed
-
-    const cap = caps.find(cap =>
-      // make sure every triangular face in the cap is valid
-      // (rules out bad ones in triangular bipyramid)
-      // make sure every square face in the cap is invalid
-      // (rules out bado ones in elongated bicupolae)
-      _.every(
-        cap.boundary().edges.filter(e => e.face.numSides === 4),
-        e => !e.isValid(),
-      ),
-    );
-    base = cap!.boundary();
-    edges = base.edges.filter(e => e.face.numSides === 3);
-  }
+  const { base, edges } = getBaseAndTransformEdges(duplicated, true);
 
   const vertexFunc = getVertexFunction(polyhedron);
   const compressSets = edges.map(e => ({

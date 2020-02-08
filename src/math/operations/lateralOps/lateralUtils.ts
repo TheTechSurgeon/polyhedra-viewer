@@ -1,4 +1,5 @@
-import { Polyhedron, Vertex, Edge } from '../../polyhedra';
+import _ from 'lodash';
+import { Polyhedron, Vertex, Edge, VEList, Cap } from '../../polyhedra';
 import { inColumn, inRow } from '../../polyhedra/tableUtils';
 
 export function everyOtherEdge(e0: Edge) {
@@ -69,4 +70,49 @@ export function getVertexFunction(
     };
   }
   throw new Error('Invalid polyhedron type');
+}
+
+export function getBaseAndTransformEdges(
+  polyhedron: Polyhedron,
+  allowInvalid?: boolean,
+) {
+  const options = allowInvalid
+    ? {
+        noFaceCheck: true,
+        noBoundaryCheck: true,
+      }
+    : {};
+  let base: VEList, edges: Edge[];
+  const caps = Cap.getAll(polyhedron, options);
+  if (caps.length === 0) {
+    // If we don't have access to a cupola (i.e., we are a prism)
+    // Use the largest face as a base
+    base = polyhedron.largestFace();
+    // If we are enlarging, pick the valid edges
+    edges = base.edges.filter(e => e.isValid());
+    // Otherwise, we're compressing and we can pick every other edge
+    if (edges.length === base.numSides) {
+      edges = base.edges.filter((_, i) => i % 2 === 0);
+    }
+  } else if (caps[0].type === 'pyramid') {
+    // If we are an augmented prism, use the largest face and make sure
+    // the augmentee is one of the edges
+    base = polyhedron.largestFace();
+    edges = everyOtherEdge(base.edges.find(e => e.twinFace().numSides === 3)!);
+  } else {
+    // If we are a cupola, use the cupola boundary as a base
+    // and pick the edges adjacent to triangles, since those are the ones
+    // that need to get pushed
+    const cap = caps.find(cap =>
+      // make sure every square face in the cap is invalid
+      // (rules out bad ones in elongated bicupolae)
+      _.every(
+        cap.boundary().edges.filter(e => e.face.numSides === 4),
+        e => !e.isValid(),
+      ),
+    );
+    base = (cap ?? caps[0]).boundary();
+    edges = base.edges.filter(e => e.face.numSides === 3);
+  }
+  return { base, edges };
 }

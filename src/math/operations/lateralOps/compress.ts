@@ -8,6 +8,7 @@ import {
   everyOtherEdge,
   hasAntiprism,
   getVertexFunction,
+  getBaseAndTransformEdges,
 } from './lateralUtils';
 
 function calculateScale(base: VEList) {
@@ -107,30 +108,10 @@ function doAntiprismCompress(polyhedron: Polyhedron) {
 }
 
 function doCompress(polyhedron: Polyhedron) {
-  let base: VEList, edges: Edge[];
-
-  const caps = Cap.getAll(polyhedron);
-  if (caps.length === 0) {
-    // If we don't have access to a cupola (i.e., we are a prism)
-    // Use the largest face as a base and just pick every other edge
-    base = polyhedron.largestFace();
-    edges = base.edges.filter((_, i) => i % 2 === 0);
-  } else if (caps[0].type === 'pyramid') {
-    // If we are an augmented prism, use the largest face and make sure
-    // the augmentee is one of the edges
-    base = polyhedron.largestFace();
-    edges = everyOtherEdge(base.edges.find(e => e.twinFace().numSides === 3)!);
-  } else {
-    // If we are a cupola, use the cupola boundary as a base
-    // and pick the edges adjacent to triangles, since those are the ones
-    // that need to get compressed
-    base = caps[0].boundary();
-    edges = base.edges.filter(e => e.face.numSides === 3);
-  }
-
   // Determine the facets that need to be pushed in, depending on what kind of polyhedron
   // we are dealing with
   const vertexFunc = getVertexFunction(polyhedron);
+  const { base, edges } = getBaseAndTransformEdges(polyhedron);
   const compressSets = edges.map(e => ({
     dirVec: base
       .centroid()
