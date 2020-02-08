@@ -66,13 +66,13 @@ export default class Vertex {
     return _.map(this.adjacentEdges(), 'face');
   }
 
-  configuration() {
+  configuration = _.once(() => {
     const config = _.map(this.adjacentFaces(), 'numSides');
     const allConfigs = getCycles(config).concat(
       getCycles(_.reverse([...config])),
     );
     return _.reduce(allConfigs, arrayMin)!;
-  }
+  });
 
   /** Return adjacent faces counted by number of sides */
   adjacentFaceCounts() {
