@@ -122,11 +122,11 @@ export function expandEdges(
     const adjFaces = v.adjacentFaces();
     // If there is only one adjacent edge
     if (edges.length === 1) {
+      const edge = edges[0];
+      const vIndex2 = newVertex(v);
       if (adjFaces.length === 3) {
         // If the vertex has an odd number of faces, add a new side to the middle face
-        const vIndex2 = newVertex(v);
 
-        const edge = edges[0];
         const oppFace = edge.prev().twinFace();
 
         //          /
@@ -139,11 +139,20 @@ export function expandEdges(
         v2fMap[oppFace.index][v.index] = [v.index, vIndex2];
         v2fMap[edge.twinFace().index][v.index] = [v.index];
         v2eMap[v.index][edge.v2.index] = [vIndex2, v.index];
+      } else if (adjFaces.length === 4) {
+        // TODO decide on which face to choose based on chirality
+        const oppFace = edge
+          .twin()
+          .next()
+          .twinFace();
+        v2fMap[edge.face.index][v.index] = [vIndex2];
+        v2fMap[oppFace.index][v.index] = [v.index, vIndex2];
+        v2fMap[edge.twinFace().index][v.index] = [v.index];
+        v2fMap[edge.prev().twinFace().index][v.index] = [vIndex2];
+        v2eMap[v.index][edge.v2.index] = [vIndex2, v.index];
       } else {
-        // If it has an even number of faces, create a new triangle face
-        // TODO implement this
         throw new Error(
-          'this type of extension not supported yet: single edge at vertex with even number of adjacent faces',
+          'this type of extension not supported yet: single edge at vertex with 5 adjacent faces',
         );
       }
     } else if (edges.length === 2) {

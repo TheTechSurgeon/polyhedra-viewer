@@ -16,7 +16,7 @@ import {
 
 export function hasAntiprism(polyhedron: Polyhedron) {
   return (
-    // inColumn(polyhedron.name, 'prisms', 'antiprism') ||
+    inColumn(polyhedron.name, 'prisms', 'antiprism') ||
     inColumn(polyhedron.name, 'capstones', 'gyroelongated') ||
     inColumn(polyhedron.name, 'capstones', 'gyroelongated bi-')
   );
@@ -45,11 +45,6 @@ function getExpandEdges(polyhedron: Polyhedron) {
       polyhedron.faces.find(f => f.numSides !== 4) ?? polyhedron.getFace();
     return face.edges.map(e => e.twin().next());
   }
-  // if (inColumn(polyhedron.name, 'prisms', 'antiprism')) {
-  //   const face =
-  //     polyhedron.faces.find(f => f.numSides !== 3) ?? polyhedron.getFace();
-  //   return face.edges.map(e => e.twin().next());
-  // }
   const caps = Cap.getAll(polyhedron);
   if (inColumn(polyhedron.name, 'capstones', '--')) {
     return caps[0].boundary().edges.map(e => e.next());
@@ -141,7 +136,11 @@ function gyroCompressSets(edges: Edge[], base: VEList) {
 
 function doEnlargeGyro(polyhedron: Polyhedron) {
   // return polyhedron;
-  const duplicated = expandEdges(polyhedron, getExpandEdgesGyro(polyhedron));
+  const duplicated = expandEdges(
+    polyhedron,
+    getExpandEdgesGyro(polyhedron),
+    'left',
+  );
   const caps = Cap.getAll(duplicated, {
     noFaceCheck: true,
     noBoundaryCheck: true,
@@ -150,29 +149,33 @@ function doEnlargeGyro(polyhedron: Polyhedron) {
   let edges: Edge[];
   let edges2: Edge[];
   let isReverse = false;
-  switch (caps.length) {
-    // Prism, our bases are our largest faces
-    case 0:
-      bases = polyhedron.facesWithNumSides(polyhedron.largestFace().numSides);
-      // edges = bases[0].edges.filter((e, i) => i % 2 === 0);
-      edges = bases[0].edges.filter(e => e.isValid());
-      edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
-      break;
-    // gyroelongated cupola
-    case 1:
-      bases = [caps[0].boundary(), polyhedron.largestFace()];
-      edges = bases[0].edges.filter(e => e.face.numSides === 3);
-      edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
-      break;
-    case 2:
-      bases = caps.map(c => c.boundary());
-      edges = bases[0].edges.filter(e => e.face.numSides === 3);
-      edges2 = bases[1].edges.filter(e => e.face.numSides === 3);
-      isReverse = getGyroOpposite(edges[0]).face.numSides !== 3;
-      break;
-    default:
-      throw new Error('Invalid number of capstones');
-  }
+  bases = polyhedron.facesWithNumSides(polyhedron.largestFace().numSides);
+  // edges = bases[0].edges.filter((e, i) => i % 2 === 0);
+  edges = bases[0].edges.filter(e => e.isValid());
+  edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
+  // switch (caps.length) {
+  //   // Prism, our bases are our largest faces
+  //   case 0:
+  //     bases = polyhedron.facesWithNumSides(polyhedron.largestFace().numSides);
+  //     // edges = bases[0].edges.filter((e, i) => i % 2 === 0);
+  //     edges = bases[0].edges.filter(e => e.isValid());
+  //     edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
+  //     break;
+  //   // gyroelongated cupola
+  //   case 1:
+  //     bases = [caps[0].boundary(), polyhedron.largestFace()];
+  //     edges = bases[0].edges.filter(e => e.face.numSides === 3);
+  //     edges2 = everyOtherEdge(getGyroOpposite(edges[0]));
+  //     break;
+  //   case 2:
+  //     bases = caps.map(c => c.boundary());
+  //     edges = bases[0].edges.filter(e => e.face.numSides === 3);
+  //     edges2 = bases[1].edges.filter(e => e.face.numSides === 3);
+  //     isReverse = getGyroOpposite(edges[0]).face.numSides !== 3;
+  //     break;
+  //   default:
+  //     throw new Error('Invalid number of capstones: ' + caps.length);
+  // }
   const [base, base2] = bases;
   const n = base.numSides;
   const horizScale = _calculateScale(polyhedron);
