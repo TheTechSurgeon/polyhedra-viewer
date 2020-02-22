@@ -301,7 +301,7 @@ const baseCapstones = (() => {
         ],
       },
     });
-    const numSides = polygonPrefixes.of(name);
+    const numSides = polygonPrefixes.of(name as any);
     if (numSides <= 5) {
       const doubledNumSides = numSides * 2;
       graph = graphMerge(graph, {
