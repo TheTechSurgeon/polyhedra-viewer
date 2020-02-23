@@ -258,7 +258,10 @@ export const othersTwoRows: Table = {
   caption: 'Other Johnson Solids',
   rows: [''],
   columns: ['', '', '', ''],
-  data: [['J86', 'J87', 'J88', 'J89'], ['J90', 'J91', 'J92']],
+  data: [
+    ['J86', 'J87', 'J88', 'J89'],
+    ['J90', 'J91', 'J92'],
+  ],
 };
 
 export const sections: Record<string, Table> = {

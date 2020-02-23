@@ -1,4 +1,3 @@
-
 // https://gist.github.com/gokulkrishh/242e68d1ee94ad05f488
 
 export const mobileMaxWidth = 767;

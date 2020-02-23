@@ -1,4 +1,3 @@
-
 export default [
   { name: 'pyramids', index: 0 },
   { name: 'cupolæ and rotunda', index: 2 },

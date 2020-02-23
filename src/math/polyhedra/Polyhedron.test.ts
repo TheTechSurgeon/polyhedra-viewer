@@ -3,8 +3,18 @@ import { SolidData } from './solidTypes';
 
 describe('Polyhedron', () => {
   const solidData: SolidData = {
-    vertices: [[1, 1, 1], [-1, -1, 1], [1, -1, -1], [-1, 1, -1]],
-    faces: [[0, 1, 2], [0, 3, 1], [0, 2, 3], [1, 3, 2]],
+    vertices: [
+      [1, 1, 1],
+      [-1, -1, 1],
+      [1, -1, -1],
+      [-1, 1, -1],
+    ],
+    faces: [
+      [0, 1, 2],
+      [0, 3, 1],
+      [0, 2, 3],
+      [1, 3, 2],
+    ],
     name: 'tetrahedron',
   };
   const polyhedron = new Polyhedron(solidData);

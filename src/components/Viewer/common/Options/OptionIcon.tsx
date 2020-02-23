@@ -50,8 +50,22 @@ function InnerIcon({ name }: Props) {
     case 'pyramid':
       return (
         <>
-          <PolyShape {...outer()} points={[[100, 50], [10, 170], [190, 170]]} />
-          <PolyLine {...inner()} points={[[140, 170], [100, 50], [60, 170]]} />
+          <PolyShape
+            {...outer()}
+            points={[
+              [100, 50],
+              [10, 170],
+              [190, 170],
+            ]}
+          />
+          <PolyLine
+            {...inner()}
+            points={[
+              [140, 170],
+              [100, 50],
+              [60, 170],
+            ]}
+          />
         </>
       );
     case 'fastigium': {
@@ -63,9 +77,20 @@ function InnerIcon({ name }: Props) {
         <>
           <PolyShape
             {...outer()}
-            points={[[150, topY], [50, topY], [10, bottomY], [190, bottomY]]}
+            points={[
+              [150, topY],
+              [50, topY],
+              [10, bottomY],
+              [190, bottomY],
+            ]}
           />
-          <PolyLine {...inner()} points={[[150, topY], [120, bottomY]]} />
+          <PolyLine
+            {...inner()}
+            points={[
+              [150, topY],
+              [120, bottomY],
+            ]}
+          />
         </>
       );
     }
