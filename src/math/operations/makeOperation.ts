@@ -1,6 +1,5 @@
 import { mapValues, isEmpty, uniq } from "lodash-es"
 
-import operationGraph from "data/graph/operationGraph"
 import { Vec3D, vec, PRECISION } from "math/geom"
 import { Polyhedron, Vertex, VertexArg, normalizeVertex } from "math/polyhedra"
 import { removeExtraneousVertices } from "./operationUtils"
@@ -92,11 +91,6 @@ interface OperationArgs<Options extends {}>
     polyhedron: Polyhedron,
   ): PolyhedronSpecs
 
-  resultsFilter?(
-    polyhedron: Polyhedron,
-    options: Partial<Options>,
-  ): object | undefined
-
   getHitOption?(
     polyhedron: Polyhedron,
     hitPnt: Vec3D,
@@ -109,7 +103,6 @@ const methodDefaults = {
   getHitOption: {},
   hasOptions: false,
   allOptionCombos: [null],
-  resultsFilter: undefined,
   faceSelectionStates: [],
   defaultOptions: {},
 }
@@ -186,11 +179,11 @@ export default function makeOperation<Options extends {}>(
     name,
     apply(polyhedron, options) {
       // get the next polyhedron name
-      const next = operationGraph.getResult(
-        polyhedron.name,
-        name,
-        withDefaults.resultsFilter!(polyhedron, options ?? {}),
-      )
+      const next = withDefaults.getResult!(
+        polyhedron.info,
+        options,
+        polyhedron,
+      ).canonicalName()
 
       // Get the actual operation result
       const opResult = withDefaults.apply(polyhedron, options ?? {}, next)
@@ -200,7 +193,7 @@ export default function makeOperation<Options extends {}>(
       return withDefaults.getHitOption!(polyhedron, vec(hitPnt), options)
     },
     canApplyTo(polyhedron) {
-      return operationGraph.canApply(polyhedron.name, name)
+      return withDefaults.canApplyTo!(polyhedron.info)
     },
   }
 }
